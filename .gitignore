@@ -113,3 +113,9 @@ mcp-servers/heurist-mesh-mcp-server/
 mcp-servers/kukapay-mcp-servers/
 !mcp-servers/mcp-config.json
 !mcp-servers/.env.mcp.template
+
+# External projects (separate repositories)
+StorageProject/
+optimism/
+simple-optimism-node/
+infra/
