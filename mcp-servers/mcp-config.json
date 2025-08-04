@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "heurist-mesh": {
+      "command": "node",
+      "args": ["./heurist-mesh-mcp-server/dist/index.js"],
+      "env": {
+        "HEURIST_API_KEY": "${HEURIST_API_KEY}"
+      }
+    },
+    "kukapay": {
+      "command": "node", 
+      "args": ["./kukapay-mcp-servers/dist/index.js"],
+      "env": {
+        "KUKA_API_KEY": "${KUKA_API_KEY}"
+      }
+    }
+  }
+}

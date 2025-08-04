@@ -1,0 +1,2 @@
+# This file ensures the security-reports directory is tracked by Git
+# Security reports will be generated here by the analysis tools

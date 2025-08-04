@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🔐 OP Stack Security Research Center</title>
+    <script src="https://unpkg.com/htmx.org@1.9.4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: rgba(0, 255, 225, 0.1);
+            border-bottom: 2px solid #00ffe1;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 225, 0.2), transparent);
+            animation: scan 3s infinite;
+        }
+        
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .header h1 {
+            color: #00ffe1;
+            font-size: 2.5rem;
+            text-shadow: 0 0 20px rgba(0, 255, 225, 0.5);
+            z-index: 1;
+            position: relative;
+        }
+        
+        .subtitle {
+            color: #888;
+            font-size: 1rem;
+            margin-top: 5px;
+            z-index: 1;
+            position: relative;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: rgba(42, 42, 42, 0.8);
+            border: 1px solid #444;
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            border-color: #00ffe1;
+            box-shadow: 0 5px 20px rgba(0, 255, 225, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #00ffe1;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .card-header i {
+            margin-right: 10px;
+            font-size: 1.4rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: auto;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-online { background: #00ff88; }
+        .status-warning { background: #ffaa00; }
+        .status-offline { background: #ff4444; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .service-link {
+            display: block;
+            color: #00ffe1;
+            text-decoration: none;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border: 1px solid #333;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        
+        .service-link:hover {
+            background: rgba(0, 255, 225, 0.1);
+            border-color: #00ffe1;
+            transform: translateX(5px);
+        }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .action-btn {
+            background: linear-gradient(45deg, #00ffe1, #00ccb4);
+            color: #000;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 255, 225, 0.3);
+        }
+        
+        .action-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .terminal {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .terminal::before {
+            content: '$ ';
+            color: #00ffe1;
+        }
+        
+        .security-tools {
+            grid-column: span 3;
+        }
+        
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .tool-card {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        
+        .tool-card:hover {
+            border-color: #00ffe1;
+            background: rgba(0, 255, 225, 0.05);
+        }
+        
+        .vulnerability-scanner {
+            grid-column: span 2;
+        }
+        
+        .metrics-panel {
+            grid-column: span 1;
+        }
+        
+        .embedded-service {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .security-tools {
+                grid-column: span 2;
+            }
+            .vulnerability-scanner {
+                grid-column: span 2;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .security-tools,
+            .vulnerability-scanner,
+            .metrics-panel {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-shield-alt"></i> OP Stack Security Research Center</h1>
+        <div class="subtitle">Automated Security Testing & Analysis Platform</div>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- Blockchain Explorer -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-search"></i>
+                Blockchain Explorer
+                <div class="status-dot status-online"></div>
+            </div>
+            <a href="http://localhost:4000" target="_blank" class="service-link">
+                <i class="fas fa-external-link-alt"></i> BlockScout Explorer
+            </a>
+            <div class="action-grid">
+                <button class="action-btn" hx-get="/api/blocks" hx-target="#terminal">
+                    <i class="fas fa-cube"></i> Query Blocks
+                </button>
+                <button class="action-btn" hx-get="/api/transactions" hx-target="#terminal">
+                    <i class="fas fa-exchange-alt"></i> List Txns
+                </button>
+            </div>
+        </div>
+
+        <!-- Network Monitoring -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-line"></i>
+                Network Monitoring
+                <div class="status-dot status-online"></div>
+            </div>
+            <a href="http://localhost:9090" target="_blank" class="service-link">
+                <i class="fas fa-tachometer-alt"></i> Prometheus Metrics
+            </a>
+            <a href="http://localhost/grafana" target="_blank" class="service-link">
+                <i class="fas fa-chart-bar"></i> Grafana Dashboard
+            </a>
+            <div class="action-grid">
+                <button class="action-btn" hx-get="/status" hx-target="#terminal">
+                    <i class="fas fa-heartbeat"></i> Health Check
+                </button>
+                <button class="action-btn" hx-get="/metrics" hx-target="#terminal">
+                    <i class="fas fa-analytics"></i> Get Metrics
+                </button>
+            </div>
+        </div>
+
+        <!-- RPC & Node Status -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-server"></i>
+                Node Management
+                <div class="status-dot status-online"></div>
+            </div>
+            <a href="http://localhost/rpc" target="_blank" class="service-link">
+                <i class="fas fa-plug"></i> RPC Endpoint
+            </a>
+            <div class="action-grid">
+                <button class="action-btn" hx-get="/status" hx-target="#terminal">
+                    <i class="fas fa-info-circle"></i> Node Status
+                </button>
+                <button class="action-btn" hx-get="/api/peers" hx-target="#terminal">
+                    <i class="fas fa-network-wired"></i> Check Peers
+                </button>
+            </div>
+        </div>
+
+        <!-- Security Testing Tools -->
+        <div class="card security-tools">
+            <div class="card-header">
+                <i class="fas fa-bug"></i>
+                Security Testing Arsenal
+                <div class="status-dot status-warning"></div>
+            </div>
+            <div class="tool-grid">
+                <div class="tool-card">
+                    <i class="fas fa-shield-virus" style="color: #ff6b6b; font-size: 2rem; margin-bottom: 10px;"></i>
+                    <button class="action-btn" hx-get="/run/slither" hx-target="#terminal">
+                        Run Slither Analysis
+                    </button>
+                </div>
+                <div class="tool-card">
+                    <i class="fas fa-hammer" style="color: #4ecdc4; font-size: 2rem; margin-bottom: 10px;"></i>
+                    <button class="action-btn" hx-get="/deploy/hardhat" hx-target="#terminal">
+                        Deploy Test Contracts
+                    </button>
+                </div>
+                <div class="tool-card">
+                    <i class="fas fa-vial" style="color: #45b7d1; font-size: 2rem; margin-bottom: 10px;"></i>
+                    <button class="action-btn" hx-get="/run/tests" hx-target="#terminal">
+                        Run Security Tests
+                    </button>
+                </div>
+                <div class="tool-card">
+                    <i class="fas fa-search-plus" style="color: #f9ca24; font-size: 2rem; margin-bottom: 10px;"></i>
+                    <button class="action-btn" hx-get="/scan/vulnerabilities" hx-target="#terminal">
+                        Vulnerability Scan
+                    </button>
+                </div>
+                <div class="tool-card">
+                    <i class="fas fa-crosshairs" style="color: #6c5ce7; font-size: 2rem; margin-bottom: 10px;"></i>
+                    <button class="action-btn" hx-get="/exploit/test" hx-target="#terminal">
+                        Test Exploits
+                    </button>
+                </div>
+                <div class="tool-card">
+                    <i class="fas fa-file-contract" style="color: #a29bfe; font-size: 2rem; margin-bottom: 10px;"></i>
+                    <button class="action-btn" hx-get="/analyze/bytecode" hx-target="#terminal">
+                        Bytecode Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MCP AI-Powered Analysis -->
+        <div class="card security-tools">
+            <div class="card-header">
+                <i class="fas fa-robot"></i>
+                AI-Powered Security Analysis (MCP)
+                <div class="status-dot status-online"></div>
+            </div>
+            <div class="tool-grid">
+                <div class="tool-card">
+                    <i class="fas fa-brain" style="color: #00ffe1; font-size: 2rem; margin-bottom: 10px;"></i>
+                    <button class="action-btn" hx-post="/mcp/heurist/analyze" hx-target="#terminal" 
+                            hx-vals='{"code": "contract analysis request"}'>
+                        AI Vulnerability Analysis
+                    </button>
+                </div>
+                <div class="tool-card">
+                    <i class="fas fa-coins" style="color: #f39c12; font-size: 2rem; margin-bottom: 10px;"></i>
+                    <button class="action-btn" hx-get="/mcp/kukapay/payment-analysis" hx-target="#terminal">
+                        Payment Security Analysis
+                    </button>
+                </div>
+                <div class="tool-card">
+                    <i class="fas fa-cogs" style="color: #95a5a6; font-size: 2rem; margin-bottom: 10px;"></i>
+                    <button class="action-btn" hx-get="/mcp/setup" hx-target="#terminal">
+                        Setup MCP Servers
+                    </button>
+                </div>
+                <div class="tool-card">
+                    <i class="fas fa-heartbeat" style="color: #e74c3c; font-size: 2rem; margin-bottom: 10px;"></i>
+                    <button class="action-btn" hx-get="/mcp/status" hx-target="#terminal">
+                        MCP Status Check
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vulnerability Scanner -->
+        <div class="card vulnerability-scanner">
+            <div class="card-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                Automated Vulnerability Detection
+                <div class="status-dot status-online"></div>
+            </div>
+            <div class="action-grid">
+                <button class="action-btn" hx-get="/scan/reentrancy" hx-target="#terminal">
+                    <i class="fas fa-sync-alt"></i> Reentrancy Check
+                </button>
+                <button class="action-btn" hx-get="/scan/overflow" hx-target="#terminal">
+                    <i class="fas fa-expand-arrows-alt"></i> Overflow Detection
+                </button>
+                <button class="action-btn" hx-get="/scan/access-control" hx-target="#terminal">
+                    <i class="fas fa-key"></i> Access Control
+                </button>
+                <button class="action-btn" hx-get="/scan/gas-optimization" hx-target="#terminal">
+                    <i class="fas fa-gas-pump"></i> Gas Analysis
+                </button>
+                <button class="action-btn" hx-get="/scan/frontrunning" hx-target="#terminal">
+                    <i class="fas fa-running"></i> Frontrunning
+                </button>
+                <button class="action-btn" hx-get="/generate/poc" hx-target="#terminal">
+                    <i class="fas fa-code"></i> Generate PoC
+                </button>
+            </div>
+        </div>
+
+        <!-- Live Metrics -->
+        <div class="card metrics-panel">
+            <div class="card-header">
+                <i class="fas fa-pulse"></i>
+                Live System Metrics
+                <div class="status-dot status-online"></div>
+            </div>
+            <div style="background: #000; padding: 15px; border-radius: 8px; font-family: 'JetBrains Mono'; font-size: 0.8rem;">
+                <div style="color: #00ffe1;">⚡ Network Status</div>
+                <div>Block Height: <span style="color: #00ff88;">Loading...</span></div>
+                <div>Gas Price: <span style="color: #00ff88;">Loading...</span></div>
+                <div>TPS: <span style="color: #00ff88;">Loading...</span></div>
+                <div style="color: #00ffe1; margin-top: 10px;">🔍 Security Alerts</div>
+                <div style="color: #ffaa00;">No active threats</div>
+                <div style="color: #00ffe1; margin-top: 10px;">📊 System Health</div>
+                <div>CPU: <span style="color: #00ff88;">Normal</span></div>
+                <div>Memory: <span style="color: #00ff88;">Normal</span></div>
+                <div>Disk: <span style="color: #00ff88;">Normal</span></div>
+            </div>
+            <button class="action-btn" style="margin-top: 15px; width: 100%;" hx-get="/refresh/metrics" hx-target="#terminal">
+                <i class="fas fa-sync"></i> Refresh Metrics
+            </button>
+        </div>
+    </div>
+
+    <!-- Terminal Output -->
+    <div class="terminal" id="terminal">
+        Welcome to OP Stack Security Research Center
+        Type commands above or use the automated tools to begin security analysis...
+        
+        > System initialized and ready for security testing
+        > All services are online and accessible
+        > Security tools loaded: Slither, Hardhat, Custom analyzers
+        > Ready for vulnerability research and exploit development
+    </div>
+
+    <script>
+        // Auto-refresh metrics every 30 seconds
+        setInterval(() => {
+            htmx.ajax('GET', '/api/quick-status', {target: '.metrics-panel'});
+        }, 30000);
+        
+        // Add some interactivity
+        document.addEventListener('htmx:afterRequest', function(evt) {
+            if (evt.detail.xhr.status === 200) {
+                const terminal = document.getElementById('terminal');
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>
