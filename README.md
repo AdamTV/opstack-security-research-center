@@ -2,6 +2,8 @@
 
 A comprehensive security testing and analysis platform for OP Stack (Optimism) blockchain infrastructure. This project provides automated vulnerability detection, exploit testing, and AI-powered security analysis tools specifically designed for Layer 2 security research.
 
+Agent operating contract: [`AGENTS.md`](AGENTS.md). Autonomous agents must not add exploit PoCs; objectives are hypothesized until the owner confirms.
+
 ![OP Stack Security Research Center](https://img.shields.io/badge/Security-Research-red) ![Python](https://img.shields.io/badge/Python-3.8+-blue) ![Solidity](https://img.shields.io/badge/Solidity-0.8+-green) ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ## 🎯 Features
